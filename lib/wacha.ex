@@ -1,0 +1,2 @@
+defmodule Wacha do
+end
