@@ -4,12 +4,12 @@ defmodule B2 do
   @application_key Application.get_env(:wacha, :b2_application_key)
 
   defp auth_headers(account) do
-    [{"Authorization" => account["authorizationToken"]}]
+    [{"Authorization", account["authorizationToken"]}]
   end
 
   def authorize_account do
     url = "https://api.backblaze.com/b2api/v1/b2_authorize_account"
-    auth = :base64.encode(@account_id <> ":" <> @application_key)
+    auth = :base64.encode("#{@account_id}:#{@application_key}")
     headers = [{"Authorization", "Basic " <> auth}]
 
     case HTTPoison.get(url, headers) do
@@ -49,10 +49,10 @@ defmodule B2 do
       nil -> nil
       resp ->
         url = resp["uploadUrl"]
-        headers = [{"Authorization" => resp["authorizationToken"]},
-                   {"Content-Type" => content_type},
-                   {"Content-Length" => byte_size(content)},
-                   {"X-Bz-Content-Sha1" => :crypto.hash(:sha, content)}]
+        headers = [{"Authorization", resp["authorizationToken"]},
+                   {"Content-Type", content_type},
+                   {"Content-Length", byte_size(content)},
+                   {"X-Bz-Content-Sha1", :crypto.hash(:sha, content)}]
         case HTTPoison.post(url, content, headers) do
           {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
             Poison.decode!(body)
