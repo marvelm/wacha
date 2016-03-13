@@ -18,7 +18,8 @@ use Mix.Config
 #
 # Or configure a 3rd-party app:
 #
-#     config :logger, level: :info
+# config :logger, level: :info
+config :logger, :console, metadata: [:file, :line]
 #
 
 # It is also possible to import configuration files, relative to this
@@ -28,3 +29,8 @@ use Mix.Config
 # here (which is why it is important to import them last).
 #
 #     import_config "#{Mix.env}.exs"
+
+import_config "secret.exs"
+
+# config :wacha,
+#   conversation_id: "asjdkjas"

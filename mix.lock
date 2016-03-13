@@ -1,4 +1,5 @@
 %{"certifi": {:hex, :certifi, "0.3.0"},
+  "elixir_mbcs": {:hex, :elixir_mbcs, "0.1.2"},
   "hackney": {:hex, :hackney, "1.4.8"},
   "httpoison": {:hex, :httpoison, "0.8.1"},
   "idna": {:hex, :idna, "1.0.3"},
