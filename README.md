@@ -11,7 +11,8 @@ Backblaze B2
 3. `git clone https://github.com/marvelm/wacha.git`
 4. Create a config file in `wacha/config/secret.exs`
   - The file should look like this:
-    ```
+  
+    ```elixir
     use Mix.Config
     config :wacha,
       b2_bucket_id: "jaksdjaslkdjsa",
