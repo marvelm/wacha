@@ -4,10 +4,10 @@ defmodule Wacha.Mixfile do
   def project do
     [app: :wacha,
      version: "0.0.1",
-     elixir: "~> 1.2",
+     elixir: "~> 1.4",
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
-     deps: deps]
+     deps: deps()]
   end
 
   # Configuration for the OTP application
@@ -16,7 +16,8 @@ defmodule Wacha.Mixfile do
   def application do
     [ mod: {Wacha, []},
       applications: [:logger,
-                     :httpoison]]
+                     :httpoison,
+                     :poolboy]]
   end
 
   # Dependencies can be Hex packages:
@@ -29,7 +30,8 @@ defmodule Wacha.Mixfile do
   #
   # Type "mix help deps" for more examples and options
   defp deps do
-    [{:httpoison, "~> 0.8.0"},
-     {:poison, "~> 2.0"}]
+    [{:httpoison, "~> 0.10.0"},
+     {:poison, "~> 3.0"},
+     {:poolboy, "~> 1.5"}]
   end
 end

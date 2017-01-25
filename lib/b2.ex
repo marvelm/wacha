@@ -1,19 +1,16 @@
 defmodule B2 do
   require Logger
 
-  @bucket_id Application.get_env(:wacha, :b2_bucket_id)
-  @account_id Application.get_env(:wacha, :b2_account_id)
-  @application_key Application.get_env(:wacha, :b2_application_key)
-
-  @upload_url_json Poison.encode!(%{"bucketId" => @bucket_id})
-
   defp auth_headers(account) do
     [{"Authorization", account["authorizationToken"]}]
   end
 
   def authorize_account do
+    account_id = Application.fetch_env!(:wacha, :b2_account_id)
+    application_key = Application.fetch_env!(:wacha, :b2_application_key)
+
     url = "https://api.backblaze.com/b2api/v1/b2_authorize_account"
-    auth = :base64.encode("#{@account_id}:#{@application_key}")
+    auth = :base64.encode("#{account_id}:#{application_key}")
     headers = [{"Authorization", "Basic " <> auth}]
 
     case HTTPoison.get(url, headers) do
@@ -32,7 +29,10 @@ defmodule B2 do
     url = account["apiUrl"] <> "/b2api/v1/b2_get_upload_url"
     headers = auth_headers(account)
 
-    case HTTPoison.post(url, @upload_url_json, headers) do
+    bucket_id = Application.fetch_env!(:wacha, :b2_bucket_id)
+    json = Poison.encode!(%{"bucketId" => bucket_id})
+
+    case HTTPoison.post(url, json, headers) do
       {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
         Poison.decode!(body)
       {:ok, %HTTPoison.Response{status_code: status_code}} ->

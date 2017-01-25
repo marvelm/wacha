@@ -1,7 +1,7 @@
-defmodule Hangout do
+defmodule Hangouts do
   require Logger
 
-  def parse_events(sender, conversation_id) do
+  def parse_events(conversation_id) do
     Logger.debug "Parsing json"
     raw = File.read!("Hangouts.json")
     data = Poison.Parser.parse!(raw)
@@ -17,7 +17,6 @@ defmodule Hangout do
       Logger.debug "Conversation found: #{conversation_id}"
     end
 
-    data["conversation_state"]["event"] |>
-      Enum.each(&(send sender, {:event, &1}))
+    data["conversation_state"]["event"]
   end
 end

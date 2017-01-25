@@ -2,56 +2,45 @@ defmodule Wacha do
   use Application
   require Logger
 
-  def listen(account) do
-    receive do
-      {:event,
-       %{"chat_message" =>
-          %{"message_content" =>
-             %{"attachment" => attachments}}}} ->
-        for attachment <- attachments do
-          photo = attachment["embed_item"]["embeds.PlusPhoto.plus_photo"]
-          mirror(account, photo)
-          Logger.info photo["photo_id"]
-        end
+  @timeout 60000
+
+  defp handle_event(
+    %{"chat_message" =>
+      %{"message_content" =>
+        %{"attachment" => attachments}}}) do
+    for attachment <- attachments do
+      photo = attachment["embed_item"]["embeds.PlusPhoto.plus_photo"]
+      :poolboy.transaction(Archiver, fn worker ->
+        Logger.info photo["photo_id"]
+        GenServer.call(worker, {:archive_photo, photo})
+      end, @timeout)
     end
-    listen(account)
   end
-
-  def mirror(account, photo) do
-    case HTTPoison.get(photo["original_content_url"]) do
-      {:ok, %HTTPoison.Response{
-          status_code: 200, body: body, headers: headers}} ->
-        {_, content_type} = Enum.find(
-          headers,
-          fn
-            ({"Content-Type", _}) -> true
-            (_) -> false
-          end)
-        Logger.info content_type
-
-        # {_, content_disposition} = Enum.find(
-        #   headers,
-        #   fn
-        #     ({"Content-Disposition", _}) -> true
-        #     (_) -> false
-        #   end)
-        # Logger.info content_disposition
-
-        # [_, file_name] = Regex.run(~r/inline;filename="(.+)"/,
-        #                            content_disposition)
-        # Logger.info file_name
-
-        #upload(account, content, content_type, file_name, photo_id) do
-        photo_id = photo["photo_id"]
-        B2.upload(account, body, content_type, photo_id)
-    end
+  
+  defp handle_event(event) do
+    Logger.debug "#{inspect event}"
   end
 
   def start(_type, _args) do
-    Task.start(fn ->
-      conversation = Application.get_env(:wacha, :conversation_id)
-      spawn_link(Hangout, :parse_events, [self, conversation])
-      listen(B2.authorize_account)
-    end)
+    import Supervisor.Spec, warn: false
+
+    account = B2.authorize_account()
+    children = [
+      :poolboy.child_spec(:archiver, [
+        name: {:local, Archiver},
+        worker_module: Archiver,
+        size: 3,
+        max_overflow: 2
+      ], [account]),
+
+      worker(Task, [fn ->
+        conversation_id = Application.get_env(:wacha, :conversation_id)
+        Hangouts.parse_events(conversation_id)
+          |> Enum.each(&(handle_event(&1)))
+      end])
+    ]
+
+    opts = [strategy: :one_for_one, name: Wacha.Supervisor]
+    Supervisor.start_link(children, opts)
   end
 end
