@@ -5,7 +5,7 @@ defmodule B2 do
     [{"Authorization", account["authorizationToken"]}]
   end
 
-  def authorize_account do
+  def authorize_account!() do
     account_id = Application.fetch_env!(:wacha, :b2_account_id)
     application_key = Application.fetch_env!(:wacha, :b2_application_key)
 
@@ -17,15 +17,13 @@ defmodule B2 do
       {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
         Poison.decode!(body)
       {:ok, %HTTPoison.Response{status_code: status_code}} ->
-        Logger.error "Not found #{status_code}"
-        nil
+        throw "Not found #{status_code}"
       {:error, %HTTPoison.Error{reason: reason}} ->
-        Logger.error "#{inspect reason}"
-        nil
+        throw reason
     end
   end
 
-  defp get_upload_url(account) do
+  defp get_upload_url!(account) do
     url = account["apiUrl"] <> "/b2api/v1/b2_get_upload_url"
     headers = auth_headers(account)
 
@@ -36,17 +34,15 @@ defmodule B2 do
       {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
         Poison.decode!(body)
       {:ok, %HTTPoison.Response{status_code: status_code}} ->
-        Logger.error("Not found. #{status_code}")
-        nil
+        throw "Not found. #{status_code}"
       {:error, %HTTPoison.Error{reason: reason}} ->
-        Logger.error "#{inspect reason}"
-        nil
+        throw reason
     end
   end
 
-  # account can be obtained from authorize_account
-  def upload(account, content, content_type, photo_id) do
-    case get_upload_url(account) do
+  # account can be obtained from authorize_account!()
+  def upload!(account, content, content_type, photo_id) do
+    case get_upload_url!(account) do
       nil -> nil
       resp ->
         url = resp["uploadUrl"]
@@ -63,11 +59,9 @@ defmodule B2 do
           {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
             Poison.decode!(body)
           {:ok, %HTTPoison.Response{status_code: status_code, body: body}} ->
-            Logger.error("Not found. #{status_code}. #{body}")
-            nil
+            throw "Not found. #{status_code}. #{body}"
           {:error, %HTTPoison.Error{reason: reason}} ->
-            Logger.error "#{inspect reason}"
-            nil
+            throw reason
         end
     end
   end

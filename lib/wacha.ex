@@ -24,7 +24,7 @@ defmodule Wacha do
   def start(_type, _args) do
     import Supervisor.Spec, warn: false
 
-    account = B2.authorize_account()
+    account = B2.authorize_account!()
     children = [
       :poolboy.child_spec(:archiver, [
         name: {:local, Archiver},

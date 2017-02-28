@@ -22,7 +22,7 @@ defmodule Archiver do
         Logger.debug "Content-Type: #{content_type}"
 
         photo_id = photo["photo_id"]
-        B2.upload(state.account, body, content_type, photo_id)
+        B2.upload!(state.account, body, content_type, photo_id)
     end
 
     {:reply, nil, state}
